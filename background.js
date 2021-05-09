@@ -12,7 +12,8 @@ let windowGgTrans = null;
 // create window when icon clicked
 async function createTranslateWindow() {
 
-  return new Promise((resolve, reject)=>{
+  // create window
+  windowGgTrans = await new Promise((resolve, reject)=>{
 
     chrome.windows.create({
       url: 'https://translate.google.com/',
@@ -30,6 +31,36 @@ async function createTranslateWindow() {
   });
 
 
+  // remove header bar
+  chrome.tabs.query({
+    windowId: windowGgTrans.id,
+    index: 0,
+    // url: startwith translate...??
+  }, (tabs)=>{
+
+    let removeHeaderBar = ()=>{
+
+      // send request to contentscript
+      chrome.tabs.sendMessage(tabs[0].id, {
+        type: 'remove_header',
+      },
+      null,
+      (response)=>{
+
+        if(!response) {
+          console.log('set retry');
+          setTimeout(()=>{removeHeaderBar();}, 1000);
+          return;
+        }
+        console.log(response);
+
+      });
+
+    };
+    removeHeaderBar();
+
+
+  });
 }
 
 // remove reference when window is removed
