@@ -1,0 +1,31 @@
+{
+	"name": "google translate shortcut 2",
+	"version": "0.1",
+	"description": "Build an Extension!",
+	"manifest_version": 2,
+
+	"permissions": [
+		"clipboardRead", 
+		"clipboardWrite",
+		"tabs",
+		"contextMenus"
+	],
+
+	"background": {
+		"scripts": ["background.js"]
+	},
+
+	"content_scripts": [
+		{
+			"matches": ["https://translate.google.com/*"],
+			"js": ["contentScript.js"],
+			"run_at": "document_end"
+		}
+	],
+
+	"browser_action": {
+		"default_icon": {
+			"16": "hello_extensions.png"
+		}
+	}
+}
