@@ -31,36 +31,6 @@ async function createTranslateWindow() {
   });
 
 
-  // remove header bar
-  chrome.tabs.query({
-    windowId: windowGgTrans.id,
-    index: 0,
-    // url: startwith translate...??
-  }, (tabs)=>{
-
-    let removeHeaderBar = ()=>{
-
-      // send request to contentscript
-      chrome.tabs.sendMessage(tabs[0].id, {
-        type: 'remove_header',
-      },
-      null,
-      (response)=>{
-
-        if(!response) {
-          console.log('set retry');
-          setTimeout(()=>{removeHeaderBar();}, 1000);
-          return;
-        }
-        console.log(response);
-
-      });
-
-    };
-    removeHeaderBar();
-
-
-  });
 }
 
 // remove reference when window is removed
@@ -144,4 +114,50 @@ chrome.contextMenus.onClicked.addListener(async function(info, tab){
   });
 
 
+});
+
+
+// handle requests
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse)=>{
+
+  console.log(msg);
+  if(msg.type == 'is_remove_header') {
+
+    if(windowGgTrans) {
+
+      chrome.tabs.query({
+        windowId: windowGgTrans.id,
+        index: 0,
+        // url: startwith translate...??
+      }, (tabs)=>{
+
+        if(tabs.length > 0 && tabs[0].id == sender.tab.id) {
+
+          sendResponse({
+            type: 'res_is_remove_header',
+            isOk: true
+          });
+
+        }
+        else {
+          sendResponse({
+            type: 'res_is_remove_header',
+            isOk: false
+          });
+        }
+      });
+
+    }
+    else {
+      sendResponse({
+        type: 'res_is_remove_header',
+        isOk: false
+      });
+    }
+
+
+
+  }
+
+  return true;
 });

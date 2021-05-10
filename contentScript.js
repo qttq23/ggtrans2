@@ -40,10 +40,20 @@ chrome.runtime.onMessage.addListener((message, sender, sendReponse)=>{
 
 	}
 
-	else if(message.type == 'remove_header') {
+	
 
-		// optional
-		// remove the header bar which is not needed
+});
+
+
+
+// check if need to remove headerBar
+chrome.runtime.sendMessage({
+	type: 'is_remove_header'
+}, (response)=>{
+	console.log(response);
+
+	if(response.type == 'res_is_remove_header'
+		&& response.isOk) {
 		(()=>{
 			let headerBar = document.querySelector('#gb > div.gb_Kd.gb_4d.gb_Td.gb_Sd');
 			if(!headerBar) {
@@ -52,15 +62,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendReponse)=>{
 			}
 			headerBar.style.display = 'none';
 		})();
-
-		sendReponse({
-			type: 'res_remove_header',
-			isOk: true
-		})
-
-
 	}
-
 });
 
 
