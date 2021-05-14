@@ -8,7 +8,9 @@
 		"clipboardRead", 
 		"clipboardWrite",
 		"tabs",
-		"contextMenus"
+		"activeTab",
+		"contextMenus",
+		"storage"
 	],
 
 	"background": {
@@ -27,5 +29,17 @@
 		"default_icon": {
 			"16": "hello_extensions.png"
 		}
+	},
+
+	"commands": {
+
+		"show_translate_window_paste": {
+			"suggested_key": {
+				"default": "Alt+1",
+				"mac": "Command+Shift+1"
+			},
+			"description": "show translate window and paste current selected text"
+		}
 	}
+
 }

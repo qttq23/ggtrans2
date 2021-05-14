@@ -1,16 +1,31 @@
 
 // create only 1 window for translate?? when user click too fast: click icon + click search context???
-// detect window after close???
+// detect window after close
 // handle runtime.lastError???
-// make translate window close when click at 'reload' button on extension manager page???
+// make translate window close when click at 'reload' button on extension manager page: popup must be ext's file
 
+// shortcut keyboard: select all, paste to input, listen, shortcut for context menu
+// option page: config shortcut??
 
 console.log('background.js: hello');
 let windowGgTrans = null;
 
 
 // create window when icon clicked
+async function focusWindow(windowId) {
+  return new Promise((resolve, reject)=>{
+
+    chrome.windows.update(windowId, {focused: true}, function(win){
+      resolve(win);
+    });
+  });
+}
+
 async function createTranslateWindow() {
+
+  if(windowGgTrans) {
+    return windowGgTrans;
+  }
 
   // create window
   windowGgTrans = await new Promise((resolve, reject)=>{
@@ -23,15 +38,17 @@ async function createTranslateWindow() {
 
     }, function(createdWindow){
 
-      console.log(createdWindow);
-      windowGgTrans = createdWindow;
       resolve(createdWindow);
+
+
     });
 
   });
-
+  return windowGgTrans;
 
 }
+
+
 
 // remove reference when window is removed
 chrome.windows.onRemoved.addListener(id=>{
@@ -39,6 +56,7 @@ chrome.windows.onRemoved.addListener(id=>{
     windowGgTrans = null;
   }
 });
+
 
 
 chrome.browserAction.onClicked.addListener(function(tab) {
@@ -53,7 +71,7 @@ chrome.browserAction.onClicked.addListener(function(tab) {
 let contextMenuItems = [
 {
   id: '1',
-  title: 'search with google translate',
+  title: 'search with google translate (Alt+1)',
   type: 'normal',
   contexts: ['selection'],
 
@@ -66,20 +84,8 @@ for(let item of contextMenuItems){
 
 
 // handle context menu clicked
-chrome.contextMenus.onClicked.addListener(async function(info, tab){
+function pasteAndFocus(windowId, selectedText) {
 
-  // text
-  let selectedText = info.selectionText;
-  console.log(selectedText);
-
-  // window id
-  if(!windowGgTrans || !windowGgTrans.id) {
-    await createTranslateWindow();
-  }
-  let windowId = windowGgTrans.id;
-  
-
-  // tabid
   chrome.tabs.query({
     windowId: windowId,
     index: 0,
@@ -107,11 +113,26 @@ chrome.contextMenus.onClicked.addListener(async function(info, tab){
       });
 
       // focus on translate window
-      chrome.windows.update(windowId, {focused: true});
+      // chrome.windows.update(windowId, {focused: true});
+      focusWindow(windowId);
     };
     sendToTranslateWindow(selectedText);
 
   });
+}
+chrome.contextMenus.onClicked.addListener(async function(info, tab){
+
+  // text
+  let selectedText = info.selectionText;
+  console.log(selectedText);
+
+  // window id
+  await createTranslateWindow();
+
+  let windowId = windowGgTrans.id;
+
+
+  pasteAndFocus(windowId, selectedText);
 
 
 });
@@ -158,6 +179,44 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse)=>{
 
 
   }
+  else if(msg.type == 'show_and_paste') {
+
+    let handle = async ()=>{
+      let selectedText = msg.selectedText;
+      let win = await createTranslateWindow();
+      pasteAndFocus(win.id, selectedText);
+
+      sendResponse({
+        type: 'res_show_and_paste',
+        isOk: true
+      });
+    };
+    handle();
+
+  }
 
   return true;
+});
+
+
+// handle keyboard shortcut 
+chrome.commands.onCommand.addListener(async function(command) {
+
+  if (command === 'show_translate_window_paste') {
+
+    chrome.tabs.executeScript({
+      code: `
+      (()=>{
+        let selectedText = window.getSelection().toString();
+        chrome.runtime.sendMessage({
+          type: 'show_and_paste',
+          selectedText: selectedText
+        }, (response)=>{});
+      })();
+      `
+    });
+
+
+  }
+
 });
